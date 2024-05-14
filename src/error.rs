@@ -49,7 +49,6 @@ mod tests {
             .is_empty());
     }
 
-    // All errors are root errors.
     #[test]
     fn source() {
         assert!(RenderingError::InvalidInput(
