@@ -1,14 +1,24 @@
-use crate::{TileCoord, TileID};
+use crate::{RenderingError, TileCoord, TileID};
 use geozero::{mvt::tile::Layer, ToMvt};
 use h3o::{geom::ToGeo, CellIndex};
 
+/// Render the given cells into the specified tile.
+///
+/// # Errors
+///
+/// All cell indexes must be unique and have the same resolution, otherwise a
+/// `RenderingError::InvalidInput` is returned.
+///
+/// If for some reason the geometry cannot be encoded into an MVT layer, a
+/// `RenderingError::Encoding` is returned, carrying the underlying error.
 pub fn render(
     tile_id: TileID,
     cells: impl IntoIterator<Item = CellIndex>,
     name: String,
-) -> Layer {
+) -> Result<Layer, RenderingError> {
     let zoom = tile_id.zoom();
-    let mut content = cells.to_geom(true).expect("cellToGeom");
+    let mut content =
+        cells.to_geom(true).map_err(RenderingError::InvalidInput)?;
 
     // Reproject the geometry into the XYZ grid coordinate system.
     for polygon in &mut content {
@@ -30,14 +40,15 @@ pub fn render(
 
     let feature = geo::Geometry::MultiPolygon(content)
         .to_mvt_unscaled()
-        .expect("MVT feature");
-    geozero::mvt::tile::Layer {
+        .map_err(RenderingError::Encoding)?;
+
+    Ok(Layer {
         extent: None,
         version: 2,
         name,
         features: vec![feature],
-        ..geozero::mvt::tile::Layer::default()
-    }
+        ..Layer::default()
+    })
 }
 
 /// Fix shape crossing the antimeridian.

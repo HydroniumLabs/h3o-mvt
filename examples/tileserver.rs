@@ -62,7 +62,8 @@ async fn handler(Path((z, x, y)): Path<(u32, u32, u32)>) -> impl IntoResponse {
         data & &bbox
     };
     // The name here must match the `source-layer` in `viewers.html`.
-    let layer = h3o_mvt::render(tile_id, content, "h3".to_owned());
+    let layer = h3o_mvt::render(tile_id, content, "h3".to_owned())
+        .expect("rendered MVT layer");
     let tile = geozero::mvt::Tile {
         layers: vec![layer],
     };

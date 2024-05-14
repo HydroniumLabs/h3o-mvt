@@ -1,3 +1,5 @@
+#![allow(clippy::panic)] // Unit tests
+
 use super::*;
 use float_eq::assert_float_eq;
 use geo::polygon;
@@ -57,6 +59,7 @@ fn bbox_transmeridian_right() {
 
 #[test]
 fn bbox_transmeridian_left() {
+    #![allow(clippy::decimal_literal_representation)] // False positive.
     let tile = TileID::new(131071, 71776, 17);
     let expected = cells![
         0x8a9b4361e75ffff,

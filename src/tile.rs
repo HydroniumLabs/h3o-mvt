@@ -7,7 +7,7 @@ use h3o::{
 use std::f64::consts::PI;
 
 /// Default tile size (from MVT spec).
-/// Cf. https://github.com/mapbox/vector-tile-spec/blob/master/2.1/README.md
+/// Cf. <https://github.com/mapbox/vector-tile-spec/blob/master/2.1/README.md>
 const TILE_SIZE: u32 = 4096;
 
 /// Default buffer size.
@@ -28,16 +28,19 @@ pub struct TileID {
 
 impl TileID {
     /// Initialize a new tile identifier.
-    pub fn new(x: u32, y: u32, z: u32) -> Self {
-        TileID { x, y, z }
+    #[must_use]
+    pub const fn new(x: u32, y: u32, z: u32) -> Self {
+        Self { x, y, z }
     }
 
     /// Returns the zoom level of the tile.
+    #[must_use]
     pub const fn zoom(&self) -> u32 {
         self.z
     }
 
     /// Returns true if the tile is in the eastern hemisphere.
+    #[must_use]
     pub const fn is_eastern(&self) -> bool {
         self.x > ((1 << self.z) / 2)
     }
@@ -46,6 +49,7 @@ impl TileID {
     ///
     /// The bounding box is represented by a set of H3 cells at the requested
     /// resolution.
+    #[must_use]
     pub fn bbox(self, resolution: Resolution) -> HashSet<CellIndex> {
         let zoom_level = self.zoom();
 
@@ -182,20 +186,23 @@ pub struct TileCoord {
 
 impl TileCoord {
     /// Converts the EPSG:4326 coordinates into coordinates in grid at zoom `z`.
+    #[must_use]
     pub fn new(coord: Coord, z: u32) -> Self {
         let lat = coord.y.to_radians();
-        let n = (1 << z) as f64;
+        let n = f64::from(1 << z);
         let x = (coord.x + 180.0) / 360.0 * n;
         let y = (1.0 - lat.tan().asinh() / PI) / 2.0 * n;
         Self { x, y, z }
     }
 
     /// Reprojects this coordinate as centered on the specified tile.
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)] // MVT use integer coordinates.
     pub fn project(self, tile: TileID) -> Coord {
-        let reference = Self::from(tile);
+        let center = Self::from(tile);
         Coord {
-            x: ((self.x - reference.x) * f64::from(TILE_SIZE)) as i32 as f64,
-            y: ((self.y - reference.y) * f64::from(TILE_SIZE)) as i32 as f64,
+            x: f64::from(((self.x - center.x) * f64::from(TILE_SIZE)) as i32),
+            y: f64::from(((self.y - center.y) * f64::from(TILE_SIZE)) as i32),
         }
     }
 
@@ -211,10 +218,10 @@ impl TileCoord {
 
 impl From<TileCoord> for Coord {
     fn from(value: TileCoord) -> Self {
-        let n = (1 << value.z) as f64;
-        let lng = (value.x / n) * 360.0 - 180.0;
+        let n = f64::from(1 << value.z);
+        let lng = (value.x / n).mul_add(360.0, -180.0);
         let lat = ((1. - 2. * value.y / n) * PI).sinh().atan();
-        Coord {
+        Self {
             x: lng,
             y: lat.to_degrees(),
         }
