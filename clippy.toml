@@ -4,3 +4,5 @@
 #
 # See https://nnethercote.github.io/perf-book/type-sizes.html
 enum-variant-size-threshold = 128
+# Some crates are still on syn 1.x
+allowed-duplicate-crates = ["syn"]
