@@ -14,4 +14,6 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+## [0.1.0] - 2024-05-14
+
 - initial release, still need some polish
