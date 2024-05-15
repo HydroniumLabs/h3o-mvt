@@ -14,6 +14,8 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+## [0.2.0] - 2024-05-15
+
 ### Changed
 
 - rename `TileID::bbox` to `TileID::cells`
