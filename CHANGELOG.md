@@ -14,6 +14,11 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+- rename `TileID::bbox` to `TileID::cells`
+- add a "scratch" mode boolean parameter to `render`
+
 ## [0.1.0] - 2024-05-14
 
 - initial release, still need some polish

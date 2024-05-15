@@ -39,18 +39,21 @@ impl TileID {
         self.z
     }
 
+    /// Returns the extent size.
+    #[must_use]
+    pub const fn extent() -> u32 {
+        TILE_SIZE
+    }
+
     /// Returns true if the tile is in the eastern hemisphere.
     #[must_use]
     pub const fn is_eastern(&self) -> bool {
         self.x > ((1 << self.z) / 2)
     }
 
-    /// Returns the bounding box of the tile.
-    ///
-    /// The bounding box is represented by a set of H3 cells at the requested
-    /// resolution.
+    /// Returns cells covering the bounding box of the tile.
     #[must_use]
-    pub fn bbox(self, resolution: Resolution) -> HashSet<CellIndex> {
+    pub fn cells(self, resolution: Resolution) -> HashSet<CellIndex> {
         let zoom_level = self.zoom();
 
         // At zoom level 0, the whole world is covered.
@@ -159,6 +162,13 @@ impl TileID {
         }
 
         parts.into()
+    }
+
+    /// Returns the buffered shape of a tile, in relative tile coordinate.
+    pub(crate) fn buffered_shape() -> Rect {
+        let min = -f64::from(BUFFER);
+        let max = f64::from(TILE_SIZE + BUFFER);
+        Rect::new((min, min), (max, max))
     }
 }
 

@@ -17,7 +17,7 @@ fn bbox_z0() {
     let tile = TileID::new(0, 0, 0);
     let expected = CellIndex::base_cells().collect::<HashSet<_>>();
 
-    let result = tile.bbox(Resolution::Zero);
+    let result = tile.cells(Resolution::Zero);
 
     assert_eq!(result, expected);
 }
@@ -27,7 +27,7 @@ fn regular_bbox() {
     let tile = TileID::new(265544, 180338, 19);
     let expected = cells![0x8a1fb46664e7fff];
 
-    let result = tile.bbox(Resolution::Ten);
+    let result = tile.cells(Resolution::Ten);
 
     assert_eq!(result, expected);
 }
@@ -52,7 +52,7 @@ fn bbox_transmeridian_right() {
         0x8a9b4361e647fff,
     ];
 
-    let result = tile.bbox(Resolution::Ten);
+    let result = tile.cells(Resolution::Ten);
 
     assert_eq!(result, expected);
 }
@@ -78,7 +78,7 @@ fn bbox_transmeridian_left() {
         0x8a9b4361a927fff,
     ];
 
-    let result = tile.bbox(Resolution::Ten);
+    let result = tile.cells(Resolution::Ten);
 
     assert_eq!(result, expected);
 }

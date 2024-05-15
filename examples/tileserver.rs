@@ -1,6 +1,10 @@
 use ahash::{HashMap, HashSet};
 use axum::{
-    extract::Path, http::Method, response::IntoResponse, routing::get, Router,
+    extract::{Path, State},
+    http::Method,
+    response::IntoResponse,
+    routing::get,
+    Router,
 };
 use clap::Parser;
 use geozero::mvt::Message as _;
@@ -22,25 +26,42 @@ struct Args {
     // Path to the H3 dataset.
     #[arg(short, long, default_value = "data.cht")]
     dataset: std::path::PathBuf,
+    // Scratch off the shape on the map.
+    #[arg(long, default_value_t = false)]
+    scratch: bool,
+}
+
+#[derive(Clone, Copy)]
+struct Config {
+    scratch: bool,
 }
 
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
+    let config = Config {
+        scratch: args.scratch,
+    };
     load_dataset(&args.dataset);
 
-    let app = Router::new().route("/:z/:x/:y", get(handler)).layer(
-        CorsLayer::new()
-            .allow_methods([Method::GET, Method::POST])
-            .allow_origin(Any),
-    );
+    let app = Router::new()
+        .route("/:z/:x/:y", get(handler))
+        .with_state(config)
+        .layer(
+            CorsLayer::new()
+                .allow_methods([Method::GET, Method::POST])
+                .allow_origin(Any),
+        );
 
     let address = format!("{}:{}", args.address, args.port);
     let listener = tokio::net::TcpListener::bind(&address).await.expect("bind");
     axum::serve(listener, app).await.expect("start the server");
 }
 
-async fn handler(Path((z, x, y)): Path<(u32, u32, u32)>) -> impl IntoResponse {
+async fn handler(
+    State(state): State<Config>,
+    Path((z, x, y)): Path<(u32, u32, u32)>,
+) -> impl IntoResponse {
     let tile_id = TileID::new(x, y, z);
     let resolution = match tile_id.zoom() {
         0..=2 => Resolution::Four,
@@ -57,17 +78,17 @@ async fn handler(Path((z, x, y)): Path<(u32, u32, u32)>) -> impl IntoResponse {
     let content = if tile_id.zoom() == 0 {
         data.clone()
     } else {
-        let bbox = tile_id.bbox(resolution);
+        let bbox = tile_id.cells(resolution);
         let bbox = bbox.into_iter().collect::<HashSet<_>>();
         data & &bbox
     };
     // The name here must match the `source-layer` in `viewers.html`.
-    let layer = h3o_mvt::render(tile_id, content, "h3".to_owned())
-        .expect("rendered MVT layer");
+    let layer =
+        h3o_mvt::render(tile_id, content, "h3".to_owned(), state.scratch)
+            .expect("rendered MVT layer");
     let tile = geozero::mvt::Tile {
         layers: vec![layer],
     };
-
     tile.encode_to_vec()
 }
 
