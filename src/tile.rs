@@ -39,6 +39,37 @@ impl TileID {
         self.z
     }
 
+    /// Returns the parent, at the specified zoom, of the tile.
+    #[must_use]
+    pub fn parent(self, zoom: u32) -> Option<Self> {
+        (zoom <= self.zoom()).then(|| {
+            let delta = self.zoom() - zoom;
+            Self::new(self.x >> delta, self.y >> delta, zoom)
+        })
+    }
+
+    /// Returns the 8 neighbors of the tile.
+    pub fn neighbors(self) -> impl Iterator<Item = Self> {
+        let (curr_x, curr_y, z) = (self.x, self.y, self.z);
+        let bound = (1 << z) - 1;
+        let prev_x = curr_x.checked_sub(1).unwrap_or(bound);
+        let prev_y = curr_y.checked_sub(1).unwrap_or(bound);
+        let next_x = (curr_x + 1) & bound;
+        let next_y = (curr_y + 1) & bound;
+
+        [
+            Self::new(prev_x, prev_y, z),
+            Self::new(curr_x, prev_y, z),
+            Self::new(next_x, prev_y, z),
+            Self::new(prev_x, curr_y, z),
+            Self::new(next_x, curr_y, z),
+            Self::new(prev_x, next_y, z),
+            Self::new(curr_x, next_y, z),
+            Self::new(next_x, next_y, z),
+        ]
+        .into_iter()
+    }
+
     /// Returns the extent size.
     #[must_use]
     pub const fn extent() -> u32 {
@@ -164,6 +195,14 @@ impl TileID {
         parts.into()
     }
 
+    /// Returns the bounding box of a tile, in EPSG:4326 coordinate.
+    pub(crate) fn bbox(self) -> Rect {
+        let (x, y, z) = (self.x, self.y, self.z);
+        let nw = TileCoord::with_padding(x, y, z, 0.);
+        let se = TileCoord::with_padding(x + 1, y + 1, z, 0.);
+        Rect::new(nw, se)
+    }
+
     /// Returns the buffered shape of a tile, in relative tile coordinate.
     pub(crate) fn buffered_shape() -> Rect {
         let min = -f64::from(BUFFER);
@@ -222,6 +261,21 @@ impl TileCoord {
             x: f64::from(x) + padding,
             y: f64::from(y) + padding,
             z,
+        }
+    }
+
+    /// Returns the tile ID corresponding to this coordinate.
+    ///
+    /// Only works with absolute tile coordinates.
+    // Truncation is the point of this conversion.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    pub(crate) fn tile_id(self) -> TileID {
+        assert!(self.x >= 0.);
+        assert!(self.y >= 0.);
+        TileID {
+            x: self.x.floor() as u32,
+            y: self.y.floor() as u32,
+            z: self.z,
         }
     }
 }

@@ -13,6 +13,56 @@ macro_rules! cells {
     }
 
 #[test]
+fn parent() {
+    let tile = TileID::new(265544, 180338, 19);
+    let parents = [
+        TileID::new(132772, 90169, 18),
+        TileID::new(66386, 45084, 17),
+        TileID::new(33193, 22542, 16),
+        TileID::new(16596, 11271, 15),
+        TileID::new(8298, 5635, 14),
+        TileID::new(4149, 2817, 13),
+        TileID::new(2074, 1408, 12),
+        TileID::new(1037, 704, 11),
+        TileID::new(518, 352, 10),
+        TileID::new(259, 176, 9),
+        TileID::new(129, 88, 8),
+        TileID::new(64, 44, 7),
+        TileID::new(32, 22, 6),
+        TileID::new(16, 11, 5),
+        TileID::new(8, 5, 4),
+        TileID::new(4, 2, 3),
+        TileID::new(2, 1, 2),
+        TileID::new(1, 0, 1),
+        TileID::new(0, 0, 0),
+    ];
+
+    for expected in parents {
+        let zoom = expected.zoom();
+        assert_eq!(tile.parent(zoom), Some(expected), "parent {zoom}");
+    }
+}
+
+#[test]
+#[allow(clippy::decimal_literal_representation)] // Don't want hex here.
+fn neighbors_antimeridian() {
+    let tile = TileID::new(0, 287108, 19);
+    let expected = [
+        TileID::new(524287, 287107, 19),
+        TileID::new(0, 287107, 19),
+        TileID::new(1, 287107, 19),
+        TileID::new(524287, 287108, 19),
+        TileID::new(1, 287108, 19),
+        TileID::new(524287, 287109, 19),
+        TileID::new(0, 287109, 19),
+        TileID::new(1, 287109, 19),
+    ];
+    let results = tile.neighbors().collect::<Vec<_>>();
+
+    assert_eq!(results, expected);
+}
+
+#[test]
 fn bbox_z0() {
     let tile = TileID::new(0, 0, 0);
     let expected = CellIndex::base_cells().collect::<HashSet<_>>();

@@ -14,6 +14,10 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+- add tiles_for_cell` to compute the tiles that contain or intersect a cell
+
 ## [0.2.0] - 2024-05-15
 
 ### Changed

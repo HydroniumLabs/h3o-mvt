@@ -121,5 +121,5 @@ mod tile;
 mod ring_hierarchy;
 
 pub use error::RenderingError;
-pub use render::render;
+pub use render::{render, tiles_for_cell};
 pub use tile::{TileCoord, TileID};

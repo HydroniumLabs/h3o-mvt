@@ -1,10 +1,64 @@
 use crate::{ring_hierarchy::RingHierarchy, RenderingError, TileCoord, TileID};
+use ahash::HashSet;
 use geo::{
-    bounding_rect::BoundingRect, intersects::Intersects, line_string,
-    winding_order::Winding, Geometry, MultiPolygon, Polygon, Rect,
+    bounding_rect::BoundingRect, contains::Contains, intersects::Intersects,
+    line_string, winding_order::Winding, Coord, Geometry, LineString,
+    MultiPolygon, Polygon, Rect,
 };
 use geozero::{mvt::tile::Layer, ToMvt};
-use h3o::{geom::ToGeo, CellIndex};
+use h3o::{geom::ToGeo, CellIndex, LatLng};
+use std::{collections::VecDeque, ops::RangeInclusive};
+
+/// Returns every tile ID touched by a given cell index in the specified zoom
+/// range.
+// TODO: use RangeBounds and return an iterator?
+#[must_use]
+pub fn tiles_for_cell(
+    cell: CellIndex,
+    zoom: RangeInclusive<u32>,
+) -> HashSet<TileID> {
+    let mut queue = VecDeque::new();
+    let mut tiles = HashSet::default();
+    let coord: Coord = LatLng::from(cell).into();
+    let tile = TileCoord::new(coord, *zoom.end()).tile_id();
+    let boundary = CellBoundary::from(cell);
+
+    // This one is guaranteed to include the cell since it contains its center.
+    tiles.insert(tile);
+    queue.push_back(tile);
+
+    // Now check if the cell is fully contained in the tile or if it overflows.
+    // In the latter case, we need to add the adjacent tiles.
+    if !boundary.is_inside(&tile) {
+        let mut candidates = tile.neighbors().collect::<VecDeque<_>>();
+        while let Some(tile) = candidates.pop_front() {
+            if boundary.intersects(&tile) {
+                tiles.insert(tile);
+                queue.push_back(tile);
+                candidates.extend(
+                    tile.neighbors().filter(|tile| !tiles.contains(tile)),
+                );
+            }
+        }
+    }
+
+    // Ok that we have handled the smaller zoom level, we can bubble up.
+    while let Some(tile) = queue.pop_front() {
+        // We have reached the requested zoom level.
+        if tile.zoom().saturating_sub(1) < *zoom.start() {
+            break;
+        }
+        // We have reached the top level.
+        let Some(parent) = tile.parent(tile.zoom().saturating_sub(1)) else {
+            break;
+        };
+        if tiles.insert(parent) {
+            queue.push_back(parent);
+        }
+    }
+
+    tiles
+}
 
 /// Render the given cells into the specified tile.
 ///
@@ -69,11 +123,13 @@ pub fn render(
     })
 }
 
+// -----------------------------------------------------------------------------
+
 /// Fix shape crossing the antimeridian.
 ///
 /// The shape need to be translated to the east or west, depending on the tile
 /// we want to render.
-fn fix_transmeridian(tile_id: TileID, ring: &mut geo::LineString<f64>) {
+fn fix_transmeridian(tile_id: TileID, ring: &mut LineString<f64>) {
     let is_transmeridian = ring
         .lines()
         .any(|line| (line.start.x - line.end.x).abs() > 180.);
@@ -163,6 +219,86 @@ fn carve_out_from_tile(shape: MultiPolygon) -> MultiPolygon {
 
     // Then rebuild the hierarchy.
     RingHierarchy::new(rings).into()
+}
+
+// -----------------------------------------------------------------------------
+
+// The boundary of a H3 cell.
+//
+// When the cell cross over the antimeridian, it is represented by two
+// projections, one westward and the other eastward.
+pub enum CellBoundary {
+    Regular(Polygon),
+    Transmeridian(Polygon, Polygon),
+}
+
+impl CellBoundary {
+    /// Check if the cell is fully contained in the tile.
+    fn is_inside(&self, tile: &TileID) -> bool {
+        fn contains(bbox: &Rect, boundary: &Polygon) -> bool {
+            // The polygon of a cell is a glorified ring, there are no holes.
+            boundary
+                .exterior()
+                .coords()
+                .all(|coord| bbox.contains(coord))
+        }
+
+        let bbox = tile.bbox();
+        match self {
+            Self::Regular(boundary) => contains(&bbox, boundary),
+            Self::Transmeridian(east, west) => {
+                if tile.is_eastern() {
+                    contains(&bbox, east)
+                } else {
+                    contains(&bbox, west)
+                }
+            }
+        }
+    }
+
+    fn intersects(&self, tile: &TileID) -> bool {
+        let bbox = tile.bbox();
+        match self {
+            Self::Regular(boundary) => boundary.intersects(&bbox),
+            Self::Transmeridian(east, west) => {
+                if tile.is_eastern() {
+                    east.intersects(&bbox)
+                } else {
+                    west.intersects(&bbox)
+                }
+            }
+        }
+    }
+}
+
+impl From<CellIndex> for CellBoundary {
+    fn from(value: CellIndex) -> Self {
+        let boundary = value.to_geom(true).expect("infalible");
+        let is_transmeridian = boundary
+            .exterior()
+            .lines()
+            .any(|line| (line.start.x - line.end.x).abs() > 180.);
+
+        if is_transmeridian {
+            let mut fixed_east = boundary.clone();
+            fixed_east.exterior_mut(|exterior| {
+                for coord in exterior.coords_mut() {
+                    coord.x += f64::from(u8::from(coord.x < 0.)) * 360.;
+                }
+            });
+
+            let mut fixed_west = boundary;
+            fixed_west.exterior_mut(|exterior| {
+                for coord in exterior.coords_mut() {
+                    coord.x -= f64::from(u8::from(coord.x > 0.)) * 360.;
+                }
+            });
+
+            Self::Transmeridian(fixed_east, fixed_west)
+        } else {
+            Self::Regular(boundary)
+        }
+    }
 }
 
 #[cfg(test)]
