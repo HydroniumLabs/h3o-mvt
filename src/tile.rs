@@ -33,6 +33,12 @@ impl TileID {
         Self { x, y, z }
     }
 
+    /// Returns the XY cooordinate of the tile.
+    #[must_use]
+    pub const fn xy(self) -> (u32, u32) {
+        (self.x, self.y)
+    }
+
     /// Returns the zoom level of the tile.
     #[must_use]
     pub const fn zoom(&self) -> u32 {

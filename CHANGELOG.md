@@ -14,6 +14,14 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+- add `xy` accessor to expose the TileID coordinate.
+
+### Changed
+
+- bump geozero
+
 ## [0.2.1] - 2024-05-17
 
 ### Added
