@@ -14,6 +14,8 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+## [0.2.2] - 2024-05-20
+
 ### Added
 
 - add `xy` accessor to expose the TileID coordinate.
