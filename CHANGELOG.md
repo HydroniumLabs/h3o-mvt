@@ -14,6 +14,8 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+## [0.3.0] - 2024-05-21
+
 ### Changed
 
 - `TileCoord` is now private.
