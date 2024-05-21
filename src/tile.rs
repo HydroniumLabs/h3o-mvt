@@ -1,3 +1,4 @@
+use crate::error::InvalidTileID;
 use ahash::HashSet;
 use geo::{coord, Coord, Geometry, MultiPolygon, Rect};
 use h3o::{
@@ -5,6 +6,9 @@ use h3o::{
     CellIndex, Resolution,
 };
 use std::f64::consts::PI;
+
+/// Maximum zoom level.
+const MAX_ZOOM: u8 = 31;
 
 /// Default tile size (from MVT spec).
 /// Cf. <https://github.com/mapbox/vector-tile-spec/blob/master/2.1/README.md>
@@ -28,9 +32,22 @@ pub struct TileID {
 
 impl TileID {
     /// Initialize a new tile identifier.
-    #[must_use]
-    pub const fn new(x: u32, y: u32, z: u32) -> Self {
-        Self { x, y, z }
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the tile coordinates (`x` and/or `y`) are invalid.
+    pub const fn new(x: u32, y: u32, z: u8) -> Result<Self, InvalidTileID> {
+        if z > MAX_ZOOM {
+            return Err(InvalidTileID::InvalidZ(x));
+        }
+        let bound = (1 << z) - 1;
+        if x > bound {
+            return Err(InvalidTileID::InvalidX(x));
+        }
+        if y > bound {
+            return Err(InvalidTileID::InvalidY(y));
+        }
+        Ok(Self { x, y, z: z as u32 })
     }
 
     /// Returns the XY cooordinate of the tile.
@@ -41,51 +58,9 @@ impl TileID {
 
     /// Returns the zoom level of the tile.
     #[must_use]
-    pub const fn zoom(&self) -> u32 {
-        self.z
-    }
-
-    /// Returns the parent, at the specified zoom, of the tile.
-    #[must_use]
-    pub fn parent(self, zoom: u32) -> Option<Self> {
-        (zoom <= self.zoom()).then(|| {
-            let delta = self.zoom() - zoom;
-            Self::new(self.x >> delta, self.y >> delta, zoom)
-        })
-    }
-
-    /// Returns the 8 neighbors of the tile.
-    pub fn neighbors(self) -> impl Iterator<Item = Self> {
-        let (curr_x, curr_y, z) = (self.x, self.y, self.z);
-        let bound = (1 << z) - 1;
-        let prev_x = curr_x.checked_sub(1).unwrap_or(bound);
-        let prev_y = curr_y.checked_sub(1).unwrap_or(bound);
-        let next_x = (curr_x + 1) & bound;
-        let next_y = (curr_y + 1) & bound;
-
-        [
-            Self::new(prev_x, prev_y, z),
-            Self::new(curr_x, prev_y, z),
-            Self::new(next_x, prev_y, z),
-            Self::new(prev_x, curr_y, z),
-            Self::new(next_x, curr_y, z),
-            Self::new(prev_x, next_y, z),
-            Self::new(curr_x, next_y, z),
-            Self::new(next_x, next_y, z),
-        ]
-        .into_iter()
-    }
-
-    /// Returns the extent size.
-    #[must_use]
-    pub const fn extent() -> u32 {
-        TILE_SIZE
-    }
-
-    /// Returns true if the tile is in the eastern hemisphere.
-    #[must_use]
-    pub const fn is_eastern(&self) -> bool {
-        self.x > ((1 << self.z) / 2)
+    #[allow(clippy::cast_possible_truncation)] // Zoom is < 32.
+    pub const fn zoom(&self) -> u8 {
+        self.z as u8
     }
 
     /// Returns cells covering the bounding box of the tile.
@@ -137,6 +112,59 @@ impl TileID {
         bbox.to_cells(config)
             .flat_map(move |cell| cell.children(resolution))
             .collect()
+    }
+
+    /// Initialize a new tile identifier.
+    #[must_use]
+    pub(crate) fn new_unchecked(x: u32, y: u32, z: u8) -> Self {
+        assert!(z <= MAX_ZOOM, "z out of range ({z} > {MAX_ZOOM})");
+        let bound = (1 << z) - 1;
+        assert!(x <= bound, "x out of range ({x} > {bound})");
+        assert!(y <= bound, "y out of range ({y} > {bound})");
+        Self { x, y, z: z.into() }
+    }
+
+    /// Returns the parent, at the specified zoom, of the tile.
+    #[must_use]
+    pub(crate) fn parent(self, zoom: u8) -> Option<Self> {
+        (zoom <= self.zoom()).then(|| {
+            let delta = self.zoom() - zoom;
+            Self::new_unchecked(self.x >> delta, self.y >> delta, zoom)
+        })
+    }
+
+    /// Returns the 8 neighbors of the tile.
+    pub(crate) fn neighbors(self) -> impl Iterator<Item = Self> {
+        let (curr_x, curr_y, z) = (self.x, self.y, self.z);
+        let bound = (1 << z) - 1;
+        let prev_x = curr_x.checked_sub(1).unwrap_or(bound);
+        let prev_y = curr_y.checked_sub(1).unwrap_or(bound);
+        let next_x = (curr_x + 1) & bound;
+        let next_y = (curr_y + 1) & bound;
+
+        [
+            Self::new_unchecked(prev_x, prev_y, self.zoom()),
+            Self::new_unchecked(curr_x, prev_y, self.zoom()),
+            Self::new_unchecked(next_x, prev_y, self.zoom()),
+            Self::new_unchecked(prev_x, curr_y, self.zoom()),
+            Self::new_unchecked(next_x, curr_y, self.zoom()),
+            Self::new_unchecked(prev_x, next_y, self.zoom()),
+            Self::new_unchecked(curr_x, next_y, self.zoom()),
+            Self::new_unchecked(next_x, next_y, self.zoom()),
+        ]
+        .into_iter()
+    }
+
+    /// Returns the extent size.
+    #[must_use]
+    pub(crate) const fn extent() -> u32 {
+        TILE_SIZE
+    }
+
+    /// Returns true if the tile is in the eastern hemisphere.
+    #[must_use]
+    pub(crate) const fn is_eastern(&self) -> bool {
+        self.x > ((1 << self.z) / 2)
     }
 
     /// Computes the shape of the padded bounding box of this tile.
@@ -242,7 +270,9 @@ pub struct TileCoord {
 impl TileCoord {
     /// Converts the EPSG:4326 coordinates into coordinates in grid at zoom `z`.
     #[must_use]
-    pub fn new(coord: Coord, z: u32) -> Self {
+    pub fn new(coord: Coord, z: u8) -> Self {
+        assert!(z <= MAX_ZOOM, "z out of range ({z} > {MAX_ZOOM})");
+        let z = u32::from(z);
         let lat = coord.y.to_radians();
         let n = f64::from(1 << z);
         let x = (coord.x + 180.0) / 360.0 * n;

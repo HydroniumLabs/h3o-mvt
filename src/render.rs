@@ -1,4 +1,6 @@
-use crate::{ring_hierarchy::RingHierarchy, RenderingError, TileCoord, TileID};
+use crate::{
+    ring_hierarchy::RingHierarchy, tile::TileCoord, RenderingError, TileID,
+};
 use ahash::HashSet;
 use geo::{
     bounding_rect::BoundingRect, contains::Contains, intersects::Intersects,
@@ -15,7 +17,7 @@ use std::{collections::VecDeque, ops::RangeInclusive};
 #[must_use]
 pub fn tiles_for_cell(
     cell: CellIndex,
-    zoom: RangeInclusive<u32>,
+    zoom: RangeInclusive<u8>,
 ) -> HashSet<TileID> {
     let mut queue = VecDeque::new();
     let mut tiles = HashSet::default();

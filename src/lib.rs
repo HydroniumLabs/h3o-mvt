@@ -120,6 +120,6 @@ mod tile;
 // TODO: if possible, try to reuse the implementation from h3o instead.
 mod ring_hierarchy;
 
-pub use error::RenderingError;
+pub use error::{InvalidTileID, RenderingError};
 pub use render::{render, tiles_for_cell};
-pub use tile::{TileCoord, TileID};
+pub use tile::TileID;

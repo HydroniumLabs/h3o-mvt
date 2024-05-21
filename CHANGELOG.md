@@ -14,6 +14,13 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+- `TileCoord` is now private.
+- `parent`, ``neighbors`, `extent` and `is_eastern` for `TileID` are now private.
+- `TileID::new` is now faillible.
+- zoom level is now exposed as `u8` rather than `u32`.
+
 ## [0.2.2] - 2024-05-20
 
 ### Added

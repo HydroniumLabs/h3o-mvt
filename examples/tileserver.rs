@@ -60,9 +60,9 @@ async fn main() {
 
 async fn handler(
     State(state): State<Config>,
-    Path((z, x, y)): Path<(u32, u32, u32)>,
+    Path((z, x, y)): Path<(u8, u32, u32)>,
 ) -> impl IntoResponse {
-    let tile_id = TileID::new(x, y, z);
+    let tile_id = TileID::new(x, y, z).expect("valid tile ID");
     let resolution = match tile_id.zoom() {
         0..=2 => Resolution::Four,
         3 | 4 => Resolution::Five,

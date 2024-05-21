@@ -14,27 +14,27 @@ macro_rules! cells {
 
 #[test]
 fn parent() {
-    let tile = TileID::new(265544, 180338, 19);
+    let tile = TileID::new_unchecked(265544, 180338, 19);
     let parents = [
-        TileID::new(132772, 90169, 18),
-        TileID::new(66386, 45084, 17),
-        TileID::new(33193, 22542, 16),
-        TileID::new(16596, 11271, 15),
-        TileID::new(8298, 5635, 14),
-        TileID::new(4149, 2817, 13),
-        TileID::new(2074, 1408, 12),
-        TileID::new(1037, 704, 11),
-        TileID::new(518, 352, 10),
-        TileID::new(259, 176, 9),
-        TileID::new(129, 88, 8),
-        TileID::new(64, 44, 7),
-        TileID::new(32, 22, 6),
-        TileID::new(16, 11, 5),
-        TileID::new(8, 5, 4),
-        TileID::new(4, 2, 3),
-        TileID::new(2, 1, 2),
-        TileID::new(1, 0, 1),
-        TileID::new(0, 0, 0),
+        TileID::new_unchecked(132772, 90169, 18),
+        TileID::new_unchecked(66386, 45084, 17),
+        TileID::new_unchecked(33193, 22542, 16),
+        TileID::new_unchecked(16596, 11271, 15),
+        TileID::new_unchecked(8298, 5635, 14),
+        TileID::new_unchecked(4149, 2817, 13),
+        TileID::new_unchecked(2074, 1408, 12),
+        TileID::new_unchecked(1037, 704, 11),
+        TileID::new_unchecked(518, 352, 10),
+        TileID::new_unchecked(259, 176, 9),
+        TileID::new_unchecked(129, 88, 8),
+        TileID::new_unchecked(64, 44, 7),
+        TileID::new_unchecked(32, 22, 6),
+        TileID::new_unchecked(16, 11, 5),
+        TileID::new_unchecked(8, 5, 4),
+        TileID::new_unchecked(4, 2, 3),
+        TileID::new_unchecked(2, 1, 2),
+        TileID::new_unchecked(1, 0, 1),
+        TileID::new_unchecked(0, 0, 0),
     ];
 
     for expected in parents {
@@ -46,16 +46,16 @@ fn parent() {
 #[test]
 #[allow(clippy::decimal_literal_representation)] // Don't want hex here.
 fn neighbors_antimeridian() {
-    let tile = TileID::new(0, 287108, 19);
+    let tile = TileID::new_unchecked(0, 287108, 19);
     let expected = [
-        TileID::new(524287, 287107, 19),
-        TileID::new(0, 287107, 19),
-        TileID::new(1, 287107, 19),
-        TileID::new(524287, 287108, 19),
-        TileID::new(1, 287108, 19),
-        TileID::new(524287, 287109, 19),
-        TileID::new(0, 287109, 19),
-        TileID::new(1, 287109, 19),
+        TileID::new_unchecked(524287, 287107, 19),
+        TileID::new_unchecked(0, 287107, 19),
+        TileID::new_unchecked(1, 287107, 19),
+        TileID::new_unchecked(524287, 287108, 19),
+        TileID::new_unchecked(1, 287108, 19),
+        TileID::new_unchecked(524287, 287109, 19),
+        TileID::new_unchecked(0, 287109, 19),
+        TileID::new_unchecked(1, 287109, 19),
     ];
     let results = tile.neighbors().collect::<Vec<_>>();
 
@@ -64,7 +64,7 @@ fn neighbors_antimeridian() {
 
 #[test]
 fn bbox_z0() {
-    let tile = TileID::new(0, 0, 0);
+    let tile = TileID::new_unchecked(0, 0, 0);
     let expected = CellIndex::base_cells().collect::<HashSet<_>>();
 
     let result = tile.cells(Resolution::Zero);
@@ -74,7 +74,7 @@ fn bbox_z0() {
 
 #[test]
 fn regular_bbox() {
-    let tile = TileID::new(265544, 180338, 19);
+    let tile = TileID::new_unchecked(265544, 180338, 19);
     let expected = cells![0x8a1fb46664e7fff];
 
     let result = tile.cells(Resolution::Ten);
@@ -84,7 +84,7 @@ fn regular_bbox() {
 
 #[test]
 fn bbox_transmeridian_right() {
-    let tile = TileID::new(0, 71776, 17);
+    let tile = TileID::new_unchecked(0, 71776, 17);
     let expected = cells![
         0x8a9b4361e607fff,
         0x8a9b4361e62ffff,
@@ -110,7 +110,7 @@ fn bbox_transmeridian_right() {
 #[test]
 fn bbox_transmeridian_left() {
     #![allow(clippy::decimal_literal_representation)] // False positive.
-    let tile = TileID::new(131071, 71776, 17);
+    let tile = TileID::new_unchecked(131071, 71776, 17);
     let expected = cells![
         0x8a9b4361e75ffff,
         0x8a9b4361e74ffff,
@@ -140,7 +140,7 @@ fn bbox_transmeridian_left() {
 // Hence the following tests.
 #[test]
 fn bbox_z1_nw() {
-    let tile = TileID::new(0, 0, 1);
+    let tile = TileID::new_unchecked(0, 0, 1);
     let result = tile.compute_bbox();
     let expected = Geometry::MultiPolygon(MultiPolygon(vec![
         // Main bbox, left part.
@@ -170,7 +170,7 @@ fn bbox_z1_nw() {
 
 #[test]
 fn bbox_z1_ne() {
-    let tile = TileID::new(1, 0, 1);
+    let tile = TileID::new_unchecked(1, 0, 1);
     let result = tile.compute_bbox();
     let expected = Geometry::MultiPolygon(MultiPolygon(vec![
         // Main bbox, left part.
@@ -200,7 +200,7 @@ fn bbox_z1_ne() {
 
 #[test]
 fn bbox_z1_sw() {
-    let tile = TileID::new(0, 1, 1);
+    let tile = TileID::new_unchecked(0, 1, 1);
     let result = tile.compute_bbox();
     let expected = Geometry::MultiPolygon(MultiPolygon(vec![
         // Main bbox, left part.
@@ -230,7 +230,7 @@ fn bbox_z1_sw() {
 
 #[test]
 fn bbox_z1_se() {
-    let tile = TileID::new(1, 1, 1);
+    let tile = TileID::new_unchecked(1, 1, 1);
     let result = tile.compute_bbox();
     let expected = Geometry::MultiPolygon(MultiPolygon(vec![
         // Main bbox, left part.
