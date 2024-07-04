@@ -3,4 +3,3 @@ Cargo.lock
 coverage/
 lcov.info
 lcov_correct.info
-*.cht
