@@ -3,8 +3,8 @@ use crate::{
 };
 use ahash::HashSet;
 use geo::{
-    line_string, BoundingRect, Contains, Coord, Geometry, Intersects,
-    LineString, MultiPolygon, Polygon, Rect, Winding,
+    line_string, BooleanOps, BoundingRect, Contains, Coord, Geometry,
+    Intersects, LineString, MultiPolygon, Polygon, Rect, Winding,
 };
 use geozero::{mvt::tile::Layer, ToMvt};
 use h3o::{geom::ToGeo, CellIndex, LatLng};
@@ -99,6 +99,15 @@ pub fn render(
         if scratch {
             geometry = carve_out_from_tile(geometry);
         }
+
+        // Clip the resulting geometry using the buffered tile shape.
+        //
+        // This results in more correct line interpolations, thus preventing
+        // distortions and mismatches at the tile edges for shape that overlap
+        // several tiles (this tend to become visible at high zoom levels such
+        // as 19+).
+        let bbox = TileID::buffered_shape().to_polygon();
+        geometry = geometry.intersection(&MultiPolygon(vec![bbox]));
 
         features.push(
             Geometry::MultiPolygon(geometry)

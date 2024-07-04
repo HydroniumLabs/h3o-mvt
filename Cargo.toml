@@ -1,6 +1,6 @@
 [package]
 name = "h3o-mvt"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Sylvain Laperche <sylvain.laperche@gmail.com>"]
 edition = "2021"
 description = "Generate MVT tiles from set of H3 cells."

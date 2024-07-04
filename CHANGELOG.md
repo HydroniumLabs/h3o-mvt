@@ -14,6 +14,10 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Fixed
+
+- fix rendering glitches at high zoom levels (e.g. 19+)
+
 ## [0.3.0] - 2024-05-21
 
 ### Changed
