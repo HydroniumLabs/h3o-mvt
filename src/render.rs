@@ -3,9 +3,8 @@ use crate::{
 };
 use ahash::HashSet;
 use geo::{
-    bounding_rect::BoundingRect, contains::Contains, intersects::Intersects,
-    line_string, winding_order::Winding, Coord, Geometry, LineString,
-    MultiPolygon, Polygon, Rect,
+    line_string, BoundingRect, Contains, Coord, Geometry, Intersects,
+    LineString, MultiPolygon, Polygon, Rect, Winding,
 };
 use geozero::{mvt::tile::Layer, ToMvt};
 use h3o::{geom::ToGeo, CellIndex, LatLng};
