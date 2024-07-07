@@ -270,7 +270,7 @@ pub struct TileCoord {
 impl TileCoord {
     /// Converts the EPSG:4326 coordinates into coordinates in grid at zoom `z`.
     #[must_use]
-    pub fn new(coord: Coord, z: u8) -> Self {
+    pub fn from_ll(coord: Coord, z: u8) -> Self {
         assert!(z <= MAX_ZOOM, "z out of range ({z} > {MAX_ZOOM})");
         let z = u32::from(z);
         let lat = coord.y.to_radians();
@@ -278,6 +278,27 @@ impl TileCoord {
         let x = (coord.x + 180.0) / 360.0 * n;
         let y = (1.0 - lat.tan().asinh() / PI) / 2.0 * n;
         Self { x, y, z }
+    }
+
+    /// Initializes a new tile coordinate from `xy` offset in the given tile.
+    #[cfg(test)]
+    #[must_use]
+    pub fn from_xy(coord: Coord, tile_id: TileID) -> Self {
+        Self {
+            x: f64::from(tile_id.x) + coord.x / f64::from(TILE_SIZE),
+            y: f64::from(tile_id.y) + coord.y / f64::from(TILE_SIZE),
+            z: tile_id.z,
+        }
+    }
+
+    /// Converts the grid coordinates into EPSG:4326 coordinates.
+    #[cfg(test)]
+    #[must_use]
+    pub fn to_ll(self) -> Coord {
+        let n = f64::from(1 << self.z);
+        let lng = (self.x / n).mul_add(360.0, -180.0);
+        let lat = (PI * (1. - 2. * self.y / n)).sinh().atan().to_degrees();
+        Coord { x: lng, y: lat }
     }
 
     /// Reprojects this coordinate as centered on the specified tile.

@@ -21,7 +21,7 @@ pub fn tiles_for_cell(
     let mut queue = VecDeque::new();
     let mut tiles = HashSet::default();
     let coord: Coord = LatLng::from(cell).into();
-    let tile = TileCoord::new(coord, *zoom.end()).tile_id();
+    let tile = TileCoord::from_ll(coord, *zoom.end()).tile_id();
     let boundary = CellBoundary::from(cell);
 
     // This one is guaranteed to include the cell since it contains its center.
@@ -87,7 +87,7 @@ pub fn render(
             geometry
                 .into_iter()
                 .map(|mut polygon| {
-                    reproject_polygon(&mut polygon, tile_id);
+                    project_polygon_into_grid(&mut polygon, tile_id);
                     polygon
                 })
                 // Ideally we should filter before the map, but it's easier to
@@ -109,11 +109,13 @@ pub fn render(
         let bbox = TileID::buffered_shape().to_polygon();
         geometry = geometry.intersection(&MultiPolygon(vec![bbox]));
 
-        features.push(
-            Geometry::MultiPolygon(geometry)
-                .to_mvt_unscaled()
-                .map_err(RenderingError::Encoding)?,
-        );
+        if !geometry.0.is_empty() {
+            features.push(
+                Geometry::MultiPolygon(geometry)
+                    .to_mvt_unscaled()
+                    .map_err(RenderingError::Encoding)?,
+            );
+        }
     } else if scratch {
         // If there are no shape in scratch mode, we still need to render the
         // tile itself.
@@ -130,6 +132,35 @@ pub fn render(
         name,
         features,
         ..Layer::default()
+    })
+}
+
+/// Convert the given MVT layer into a Geometry object.
+#[allow(clippy::unimplemented)] // It's ok, this is for test only.
+#[cfg(test)]
+pub fn layer_to_geometry(tile_id: TileID, layer: &Layer) -> Option<Geometry> {
+    // No feature, no geometry.
+    if layer.features.is_empty() {
+        return None;
+    }
+
+    let mut geo_writer = geozero::geo_types::GeoWriter::new();
+    geozero::mvt::process_geom(&layer.features[0], &mut geo_writer)
+        .expect("read MVT geometry");
+    geo_writer.take_geometry().map(|mut geometry| {
+        match geometry {
+            Geometry::Polygon(ref mut polygon) => {
+                project_polygon_into_epgs4326(polygon, tile_id);
+            }
+            Geometry::MultiPolygon(ref mut multipolygon) => {
+                for polygon in multipolygon {
+                    project_polygon_into_epgs4326(polygon, tile_id);
+                }
+            }
+            // In this context, we only expect polygons or multipolygons.
+            _ => unimplemented!("unsupported geometry"),
+        }
+        geometry
     })
 }
 
@@ -161,20 +192,37 @@ fn fix_transmeridian(tile_id: TileID, ring: &mut LineString<f64>) {
 ///
 /// Convert from EPSG:4326 coordinate to the tile coordinate system, and then
 /// project into the relative tile coordinate.
-fn reproject_polygon(polygon: &mut Polygon, tile_id: TileID) {
+fn project_polygon_into_grid(polygon: &mut Polygon, tile_id: TileID) {
     let zoom = tile_id.zoom();
 
     polygon.exterior_mut(|ring| {
         fix_transmeridian(tile_id, ring);
         for coord in ring.coords_mut() {
-            *coord = TileCoord::new(*coord, zoom).project(tile_id);
+            *coord = TileCoord::from_ll(*coord, zoom).project(tile_id);
         }
     });
     polygon.interiors_mut(|interiors| {
         for ring in interiors {
             fix_transmeridian(tile_id, ring);
             for coord in ring.coords_mut() {
-                *coord = TileCoord::new(*coord, zoom).project(tile_id);
+                *coord = TileCoord::from_ll(*coord, zoom).project(tile_id);
+            }
+        }
+    });
+}
+
+/// Convert a polygon in the given tile to the EPSG:4326 coordinate system.
+#[cfg(test)]
+fn project_polygon_into_epgs4326(polygon: &mut Polygon, tile_id: TileID) {
+    polygon.exterior_mut(|ring| {
+        for coord in ring.coords_mut() {
+            *coord = TileCoord::from_xy(*coord, tile_id).to_ll();
+        }
+    });
+    polygon.interiors_mut(|interiors| {
+        for ring in interiors {
+            for coord in ring.coords_mut() {
+                *coord = TileCoord::from_xy(*coord, tile_id).to_ll();
             }
         }
     });
