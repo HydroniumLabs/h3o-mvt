@@ -1,4 +1,4 @@
-#![allow(clippy::panic)] // Unit tests, this is fine.
+#![expect(clippy::panic, reason = "unit tests, this is fine")]
 
 use super::*;
 use ahash::HashMap;
@@ -113,7 +113,10 @@ fn tiles_for_cell_simple() {
 }
 
 #[test]
-#[allow(clippy::decimal_literal_representation)] // Don't want hex here.
+#[expect(
+    clippy::decimal_literal_representation,
+    reason = "don't want hex here"
+)]
 fn tiles_for_cell_antimeridian() {
     let cell = CellIndex::try_from(0x8a9b4361e747fff).expect("cell");
     let expected = [

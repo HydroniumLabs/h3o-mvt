@@ -110,6 +110,7 @@
     clippy::unreadable_literal,
     // Too many irrelevant warning (about internal invariants).
     clippy::missing_panics_doc,
+    reason = "allow some exceptions"
 )]
 
 // }}}

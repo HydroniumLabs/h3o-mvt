@@ -58,7 +58,7 @@ impl TileID {
 
     /// Returns the zoom level of the tile.
     #[must_use]
-    #[allow(clippy::cast_possible_truncation)] // Zoom is < 32.
+    #[expect(clippy::cast_possible_truncation, reason = "zoom is < 32")]
     pub const fn zoom(&self) -> u8 {
         self.z as u8
     }
@@ -303,7 +303,10 @@ impl TileCoord {
 
     /// Reprojects this coordinate as centered on the specified tile.
     #[must_use]
-    #[allow(clippy::cast_possible_truncation)] // MVT use integer coordinates.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "MVT use integer coordinates"
+    )]
     pub fn project(self, tile: TileID) -> Coord {
         let center = Self::from(tile);
         Coord {
@@ -324,8 +327,11 @@ impl TileCoord {
     /// Returns the tile ID corresponding to this coordinate.
     ///
     /// Only works with absolute tile coordinates.
-    // Truncation is the point of this conversion.
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "truncation is on purpose + assert on sign loss"
+    )]
     pub(crate) fn tile_id(self) -> TileID {
         assert!(self.x >= 0.);
         assert!(self.y >= 0.);

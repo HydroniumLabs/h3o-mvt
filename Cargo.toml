@@ -1,6 +1,6 @@
 [package]
 name = "h3o-mvt"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Sylvain Laperche <sylvain.laperche@gmail.com>"]
 edition = "2021"
 description = "Generate MVT tiles from set of H3 cells."
@@ -26,7 +26,7 @@ pre-release-replacements = [
 [dependencies]
 ahash = { version = "0.8", default-features = false, features = ["std", "compile-time-rng"] }
 geo = { version = "0.28", default-features = false }
-geozero = { version = "0.13", default-features = false, features = ["with-geo", "with-mvt"] }
+geozero = { version = "0.14", default-features = false, features = ["with-geo", "with-mvt"] }
 h3o = { version = "0.6", default-features = false, features = ["std", "geo"] }
 
 [dev-dependencies]
@@ -37,7 +37,7 @@ geojson = { version = "0.24", default-features = false, features = ["geo-types"]
 h3o-zip = { version = "0.1", default-features = false }
 float_eq = { version = "1.0", default-features = false }
 tokio = { version = "1.0", default-features = false, features = ["macros", "net", "rt-multi-thread"] }
-tower-http = { version = "0.5", default-features = false, features = ["cors"] }
+tower-http = { version = "0.6", default-features = false, features = ["cors"] }
 
 [[bench]]
 name = "api"

@@ -1,4 +1,4 @@
-#![allow(clippy::panic)] // Unit tests
+#![expect(clippy::panic, reason = "unit tests, this is fine")]
 
 use super::*;
 use float_eq::assert_float_eq;
@@ -44,7 +44,10 @@ fn parent() {
 }
 
 #[test]
-#[allow(clippy::decimal_literal_representation)] // Don't want hex here.
+#[expect(
+    clippy::decimal_literal_representation,
+    reason = "don't want hex here"
+)]
 fn neighbors_antimeridian() {
     let tile = TileID::new_unchecked(0, 287108, 19);
     let expected = [
@@ -109,7 +112,10 @@ fn bbox_transmeridian_right() {
 
 #[test]
 fn bbox_transmeridian_left() {
-    #![allow(clippy::decimal_literal_representation)] // False positive.
+    #[expect(
+        clippy::decimal_literal_representation,
+        reason = "don't want hex here"
+    )]
     let tile = TileID::new_unchecked(131071, 71776, 17);
     let expected = cells![
         0x8a9b4361e75ffff,

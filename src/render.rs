@@ -136,7 +136,7 @@ pub fn render(
 }
 
 /// Convert the given MVT layer into a Geometry object.
-#[allow(clippy::unimplemented)] // It's ok, this is for test only.
+#[expect(clippy::unimplemented, reason = "it's ok, this is for test only")]
 #[cfg(test)]
 pub fn layer_to_geometry(tile_id: TileID, layer: &Layer) -> Option<Geometry> {
     // No feature, no geometry.
