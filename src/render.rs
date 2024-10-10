@@ -18,7 +18,6 @@ pub fn tiles_for_cell(
     cell: CellIndex,
     zoom: RangeInclusive<u8>,
 ) -> HashSet<TileID> {
-    let mut queue = VecDeque::new();
     let mut tiles = HashSet::default();
     let coord: Coord = LatLng::from(cell).into();
     let tile = TileCoord::from_ll(coord, *zoom.end()).tile_id();
@@ -26,23 +25,22 @@ pub fn tiles_for_cell(
 
     // This one is guaranteed to include the cell since it contains its center.
     tiles.insert(tile);
-    queue.push_back(tile);
 
     // Now check if the cell is fully contained in the tile or if it overflows.
     // In the latter case, we need to add the adjacent tiles.
     if !boundary.is_inside(&tile) {
+        let mut seen = tile.neighbors().collect::<HashSet<_>>();
         let mut candidates = tile.neighbors().collect::<VecDeque<_>>();
         while let Some(tile) = candidates.pop_front() {
             if boundary.intersects(&tile) {
                 tiles.insert(tile);
-                queue.push_back(tile);
-                candidates.extend(
-                    tile.neighbors().filter(|tile| !tiles.contains(tile)),
-                );
+                candidates
+                    .extend(tile.neighbors().filter(|tile| seen.insert(*tile)));
             }
         }
     }
 
+    let mut queue = tiles.iter().copied().collect::<VecDeque<_>>();
     // Ok that we have handled the smaller zoom level, we can bubble up.
     while let Some(tile) = queue.pop_front() {
         // We have reached the requested zoom level.

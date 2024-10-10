@@ -113,6 +113,35 @@ fn tiles_for_cell_simple() {
 }
 
 #[test]
+fn tiles_for_cell_contained_within() {
+    let cell = CellIndex::try_from(0x8a1fb46664e7fff).expect("cell");
+    let expected = [
+        TileID::new_unchecked(16596, 11271, 15),
+        TileID::new_unchecked(8298, 5635, 14),
+        TileID::new_unchecked(4149, 2817, 13),
+        TileID::new_unchecked(2074, 1408, 12),
+        TileID::new_unchecked(1037, 704, 11),
+        TileID::new_unchecked(518, 352, 10),
+        TileID::new_unchecked(259, 176, 9),
+        TileID::new_unchecked(129, 88, 8),
+        TileID::new_unchecked(64, 44, 7),
+        TileID::new_unchecked(32, 22, 6),
+        TileID::new_unchecked(16, 11, 5),
+        TileID::new_unchecked(8, 5, 4),
+        TileID::new_unchecked(4, 2, 3),
+        TileID::new_unchecked(2, 1, 2),
+        TileID::new_unchecked(1, 0, 1),
+        TileID::new_unchecked(0, 0, 0),
+    ]
+    .iter()
+    .copied()
+    .collect::<HashSet<_>>();
+
+    let result = tiles_for_cell(cell, 0..=15);
+    assert_eq!(result, expected, "0..=15");
+}
+
+#[test]
 #[expect(
     clippy::decimal_literal_representation,
     reason = "don't want hex here"

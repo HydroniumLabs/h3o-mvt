@@ -14,6 +14,10 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Fixed
+
+- fix performance issue at higher zoom level for `tiles_for_cell`.
+
 ## [0.3.2] - 2024-10-03
 
 ### Changed
