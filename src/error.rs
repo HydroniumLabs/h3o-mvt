@@ -1,5 +1,5 @@
 use geozero::error::GeozeroError;
-use h3o::error::OutlinerError;
+use h3o::error::DissolutionError;
 use std::{error::Error, fmt};
 
 /// Error occurring while rendering a set of cell indices to MVT.
@@ -43,7 +43,7 @@ impl Error for InvalidTileID {
 #[non_exhaustive]
 pub enum RenderingError {
     /// Invalid input.
-    InvalidInput(OutlinerError),
+    InvalidInput(DissolutionError),
     /// MVT encoding failed.
     Encoding(GeozeroError),
 }
@@ -77,9 +77,11 @@ mod tests {
     // All error must have a non-empty display.
     #[test]
     fn display() {
-        assert!(!RenderingError::InvalidInput(OutlinerError::DuplicateInput)
-            .to_string()
-            .is_empty());
+        assert!(!RenderingError::InvalidInput(
+            DissolutionError::DuplicateInput
+        )
+        .to_string()
+        .is_empty());
         assert!(!RenderingError::Encoding(GeozeroError::GeometryFormat)
             .to_string()
             .is_empty());
@@ -91,7 +93,7 @@ mod tests {
     #[test]
     fn source() {
         assert!(RenderingError::InvalidInput(
-            OutlinerError::HeterogeneousResolution
+            DissolutionError::HeterogeneousResolution
         )
         .source()
         .is_some());

@@ -7,7 +7,7 @@ use geo::{
     Intersects, LineString, MultiPolygon, Polygon, Rect, Winding,
 };
 use geozero::{mvt::tile::Layer, ToMvt};
-use h3o::{geom::ToGeo, CellIndex, LatLng};
+use h3o::{CellIndex, LatLng};
 use std::{collections::VecDeque, ops::RangeInclusive};
 
 /// Returns every tile ID touched by a given cell index in the specified zoom
@@ -74,8 +74,7 @@ pub fn render(
     name: String,
     scratch: bool,
 ) -> Result<Layer, RenderingError> {
-    let geometry = cells
-        .to_geom(true)
+    let geometry = h3o::geom::dissolve(cells)
         .map_err(RenderingError::InvalidInput)
         .map(|shape| (!shape.0.is_empty()).then_some(shape))?;
 
@@ -329,7 +328,7 @@ impl CellBoundary {
 
 impl From<CellIndex> for CellBoundary {
     fn from(value: CellIndex) -> Self {
-        let boundary = value.to_geom(true).expect("infalible");
+        let boundary = Polygon::from(value);
         let is_transmeridian = boundary
             .exterior()
             .lines()

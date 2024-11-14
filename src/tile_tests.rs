@@ -2,7 +2,7 @@
 
 use super::*;
 use float_eq::assert_float_eq;
-use geo::polygon;
+use geo::{polygon, MultiPolygon};
 
 macro_rules! cells {
         ($($x: expr),* $(,)?) => {{
@@ -148,7 +148,7 @@ fn bbox_transmeridian_left() {
 fn bbox_z1_nw() {
     let tile = TileID::new_unchecked(0, 0, 1);
     let result = tile.compute_bbox();
-    let expected = Geometry::MultiPolygon(MultiPolygon(vec![
+    let expected = MultiPolygon(vec![
         // Main bbox, left part.
         polygon![
             (x: -180.0,     y: -3.51342),
@@ -170,7 +170,7 @@ fn bbox_z1_nw() {
             (x: 180.0,     y: 85.34532),
             (x: 176.48437, y: 85.34532),
         ],
-    ]));
+    ]);
     assert_bbox_equals(&result, &expected);
 }
 
@@ -178,7 +178,7 @@ fn bbox_z1_nw() {
 fn bbox_z1_ne() {
     let tile = TileID::new_unchecked(1, 0, 1);
     let result = tile.compute_bbox();
-    let expected = Geometry::MultiPolygon(MultiPolygon(vec![
+    let expected = MultiPolygon(vec![
         // Main bbox, left part.
         polygon![
             (x: -3.51562, y: -3.51342),
@@ -200,7 +200,7 @@ fn bbox_z1_ne() {
             (x: -176.48437, y: 85.34532),
             (x: -180.0,     y: 85.34532),
         ],
-    ]));
+    ]);
     assert_bbox_equals(&result, &expected);
 }
 
@@ -208,7 +208,7 @@ fn bbox_z1_ne() {
 fn bbox_z1_sw() {
     let tile = TileID::new_unchecked(0, 1, 1);
     let result = tile.compute_bbox();
-    let expected = Geometry::MultiPolygon(MultiPolygon(vec![
+    let expected = MultiPolygon(vec![
         // Main bbox, left part.
         polygon![
             (x: -180.0,     y: -85.34532),
@@ -230,7 +230,7 @@ fn bbox_z1_sw() {
             (x: 180.0,     y:   3.51342),
             (x: 176.48437, y:   3.51342),
         ],
-    ]));
+    ]);
     assert_bbox_equals(&result, &expected);
 }
 
@@ -238,7 +238,7 @@ fn bbox_z1_sw() {
 fn bbox_z1_se() {
     let tile = TileID::new_unchecked(1, 1, 1);
     let result = tile.compute_bbox();
-    let expected = Geometry::MultiPolygon(MultiPolygon(vec![
+    let expected = MultiPolygon(vec![
         // Main bbox, left part.
         polygon![
             (x: -3.51562, y: -85.34532),
@@ -260,30 +260,25 @@ fn bbox_z1_se() {
             (x: -176.48437, y:   3.51342),
             (x: -180.0,     y:   3.51342),
         ],
-    ]));
+    ]);
     assert_bbox_equals(&result, &expected);
 }
 
-fn assert_bbox_equals(lhs: &Geometry, rhs: &Geometry) {
+fn assert_bbox_equals(lhs: &MultiPolygon, rhs: &MultiPolygon) {
     // Based on https://gis.stackexchange.com/a/8674
     const EPSILON: f64 = 1e-5;
 
-    match (lhs, rhs) {
-        (Geometry::MultiPolygon(lhs), Geometry::MultiPolygon(rhs)) => {
-            assert_eq!(lhs.0.len(), rhs.0.len(), "bbox pieces count");
-            for (lhs, rhs) in lhs.0.iter().zip(rhs.0.iter()) {
-                assert!(
-                    lhs.interiors().is_empty() && rhs.interiors().is_empty(),
-                    "hole in bbox"
-                );
-                let lhs = lhs.exterior();
-                let rhs = rhs.exterior();
-                for (lhs, rhs) in lhs.coords().zip(rhs.coords()) {
-                    assert_float_eq!(lhs.x, rhs.x, abs <= EPSILON);
-                    assert_float_eq!(lhs.y, rhs.y, abs <= EPSILON);
-                }
-            }
+    assert_eq!(lhs.0.len(), rhs.0.len(), "bbox pieces count");
+    for (lhs, rhs) in lhs.0.iter().zip(rhs.0.iter()) {
+        assert!(
+            lhs.interiors().is_empty() && rhs.interiors().is_empty(),
+            "hole in bbox"
+        );
+        let lhs = lhs.exterior();
+        let rhs = rhs.exterior();
+        for (lhs, rhs) in lhs.coords().zip(rhs.coords()) {
+            assert_float_eq!(lhs.x, rhs.x, abs <= EPSILON);
+            assert_float_eq!(lhs.y, rhs.y, abs <= EPSILON);
         }
-        _ => panic!("unexpected bbox types"),
     }
 }

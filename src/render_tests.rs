@@ -210,6 +210,7 @@ fn tiles_for_cell_antimeridian() {
     assert_eq!(result, expected);
 }
 
+#[ignore = "https://github.com/georust/geozero/issues/218"]
 #[test]
 fn render_cells_antimeridian() {
     let cells = vec![

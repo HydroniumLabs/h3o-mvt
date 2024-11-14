@@ -1,8 +1,8 @@
 use crate::error::InvalidTileID;
 use ahash::HashSet;
-use geo::{coord, Coord, Geometry, MultiPolygon, Rect};
+use geo::{coord, Coord, MultiPolygon, Rect};
 use h3o::{
-    geom::{ContainmentMode, PolyfillConfig, ToCells},
+    geom::{ContainmentMode, TilerBuilder},
     CellIndex, Resolution,
 };
 use std::f64::consts::PI;
@@ -101,15 +101,16 @@ impl TileID {
             },
         );
 
+        // We use the `Covers` containment mode to ensure 100% coverage.
+        let mut tiler = TilerBuilder::new(polyfill_res)
+            .containment_mode(ContainmentMode::Covers)
+            .build();
         // Compute the shape of the bounding box.
         // Note that in some cases it can be more complex than a simple rect.
-        let bbox = h3o::geom::Geometry::from_degrees(self.compute_bbox())
-            .expect("invalid tile bounding box");
-        // We use the `Covers` containment mode to ensure 100% coverage.
-        let config = PolyfillConfig::new(polyfill_res)
-            .containment_mode(ContainmentMode::Covers);
+        tiler.add_batch(self.compute_bbox()).expect("invalid bbox");
         // Polyfill at the selected resolution and convert to the requested one.
-        bbox.to_cells(config)
+        tiler
+            .into_coverage()
             .flat_map(move |cell| cell.children(resolution))
             .collect()
     }
@@ -175,7 +176,7 @@ impl TileID {
     // around the world (e.g. crossing the antimeridian), the bounding box is
     // split into smaller components that can be polyfilled independanly and
     // then merged back to obtain the final H3 coverage.
-    fn compute_bbox(self) -> Geometry {
+    fn compute_bbox(self) -> MultiPolygon {
         // Compute the padded bounding box of the tile.
         let (x, y, z) = (self.x, self.y, self.z);
         let nw = TileCoord::with_padding(x, y, z, -PADDING);
@@ -184,7 +185,7 @@ impl TileID {
 
         // Common case: a trivial bounding box.
         if bbox_is_trivial(&bbox) {
-            return bbox.into();
+            return MultiPolygon::new(vec![bbox.to_polygon()]);
         }
 
         // Build a multi-part bounding box.
