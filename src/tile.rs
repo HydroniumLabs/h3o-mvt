@@ -227,7 +227,7 @@ impl TileID {
             parts.0.push(clamped.into());
         }
 
-        parts.into()
+        parts
     }
 
     /// Returns the bounding box of a tile, in EPSG:4326 coordinate.

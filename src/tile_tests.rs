@@ -1,5 +1,3 @@
-#![expect(clippy::panic, reason = "unit tests, this is fine")]
-
 use super::*;
 use float_eq::assert_float_eq;
 use geo::{polygon, MultiPolygon};
