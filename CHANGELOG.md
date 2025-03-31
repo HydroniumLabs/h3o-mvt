@@ -14,6 +14,8 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+## [0.3.5] - 2025-03-31
+
 ### Changed
 
 - bump deps
