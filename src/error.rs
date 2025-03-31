@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn source() {
         assert!(RenderingError::InvalidInput(
-            DissolutionError::HeterogeneousResolution
+            DissolutionError::UnsupportedResolution
         )
         .source()
         .is_some());

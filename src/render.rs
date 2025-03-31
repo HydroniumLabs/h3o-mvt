@@ -7,7 +7,7 @@ use geo::{
     Intersects, LineString, MultiPolygon, Polygon, Rect, Winding,
 };
 use geozero::{mvt::tile::Layer, ToMvt};
-use h3o::{CellIndex, LatLng};
+use h3o::{geom::SolventBuilder, CellIndex, LatLng};
 use std::{collections::VecDeque, ops::RangeInclusive};
 
 /// Returns every tile ID touched by a given cell index in the specified zoom
@@ -74,7 +74,9 @@ pub fn render(
     name: String,
     scratch: bool,
 ) -> Result<Layer, RenderingError> {
-    let geometry = h3o::geom::dissolve(cells)
+    let solvent = SolventBuilder::new().build();
+    let geometry = solvent
+        .dissolve(cells)
         .map_err(RenderingError::InvalidInput)
         .map(|shape| (!shape.0.is_empty()).then_some(shape))?;
 
