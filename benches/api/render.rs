@@ -1,7 +1,8 @@
 use super::utils::load_dataset;
-use criterion::{black_box, BatchSize, Criterion};
+use criterion::{BatchSize, Criterion};
 use h3o::{CellIndex, Resolution};
 use h3o_mvt::TileID;
+use std::hint::black_box;
 
 pub fn render_full(c: &mut Criterion) {
     let cells = vec![
