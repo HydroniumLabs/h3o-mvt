@@ -32,7 +32,7 @@ h3o = { version = "0.8", default-features = false, features = ["std", "geo"] }
 [dev-dependencies]
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
 clap = { version = "4.0", default-features = false, features = ["std", "color", "help", "usage", "error-context", "suggestions", "derive"] }
-criterion = { version = "0.5", default-features = false, features = ["plotters", "cargo_bench_support", "html_reports"] }
+criterion = { version = "0.7", default-features = false, features = ["plotters", "cargo_bench_support", "html_reports"] }
 geojson = { version = "0.24", default-features = false, features = ["geo-types"] }
 h3o-zip = { version = "0.1", default-features = false }
 float_eq = { version = "1.0", default-features = false }
