@@ -3,8 +3,8 @@
 use super::*;
 use ahash::HashMap;
 use float_eq::{assert_float_eq, float_eq};
-use geo::{polygon, Geometry, LineString, Polygon};
-use geojson::{feature::Id as FeatureId, Feature, FeatureCollection};
+use geo::{Geometry, LineString, Polygon, polygon};
+use geojson::{Feature, FeatureCollection, feature::Id as FeatureId};
 use std::{
     fs,
     path::{Path, PathBuf},

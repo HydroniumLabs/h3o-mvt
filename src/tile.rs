@@ -1,9 +1,9 @@
 use crate::error::InvalidTileID;
 use ahash::HashSet;
-use geo::{coord, Coord, MultiPolygon, Rect};
+use geo::{Coord, MultiPolygon, Rect, coord};
 use h3o::{
-    geom::{ContainmentMode, TilerBuilder},
     CellIndex, Resolution,
+    geom::{ContainmentMode, TilerBuilder},
 };
 use std::f64::consts::PI;
 

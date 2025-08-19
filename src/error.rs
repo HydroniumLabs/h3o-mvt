@@ -77,14 +77,16 @@ mod tests {
     // All error must have a non-empty display.
     #[test]
     fn display() {
-        assert!(!RenderingError::InvalidInput(
-            DissolutionError::DuplicateInput
-        )
-        .to_string()
-        .is_empty());
-        assert!(!RenderingError::Encoding(GeozeroError::GeometryFormat)
-            .to_string()
-            .is_empty());
+        assert!(
+            !RenderingError::InvalidInput(DissolutionError::DuplicateInput)
+                .to_string()
+                .is_empty()
+        );
+        assert!(
+            !RenderingError::Encoding(GeozeroError::GeometryFormat)
+                .to_string()
+                .is_empty()
+        );
         assert!(!InvalidTileID::InvalidX(42).to_string().is_empty());
         assert!(!InvalidTileID::InvalidY(42).to_string().is_empty());
         assert!(!InvalidTileID::InvalidZ(42).to_string().is_empty());
@@ -92,14 +94,18 @@ mod tests {
 
     #[test]
     fn source() {
-        assert!(RenderingError::InvalidInput(
-            DissolutionError::UnsupportedResolution
-        )
-        .source()
-        .is_some());
-        assert!(RenderingError::Encoding(GeozeroError::GeometryFormat)
+        assert!(
+            RenderingError::InvalidInput(
+                DissolutionError::UnsupportedResolution
+            )
             .source()
-            .is_some());
+            .is_some()
+        );
+        assert!(
+            RenderingError::Encoding(GeozeroError::GeometryFormat)
+                .source()
+                .is_some()
+        );
         assert!(InvalidTileID::InvalidX(42).source().is_none());
         assert!(InvalidTileID::InvalidY(42).source().is_none());
         assert!(InvalidTileID::InvalidZ(42).source().is_none());

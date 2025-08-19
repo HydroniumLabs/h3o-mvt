@@ -1,10 +1,10 @@
 use ahash::{HashMap, HashSet};
 use axum::{
+    Router,
     extract::{Path, State},
     http::Method,
     response::IntoResponse,
     routing::get,
-    Router,
 };
 use clap::Parser;
 use geozero::mvt::Message as _;

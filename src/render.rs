@@ -1,13 +1,13 @@
 use crate::{
-    ring_hierarchy::RingHierarchy, tile::TileCoord, RenderingError, TileID,
+    RenderingError, TileID, ring_hierarchy::RingHierarchy, tile::TileCoord,
 };
 use ahash::HashSet;
 use geo::{
-    line_string, BooleanOps, BoundingRect, Contains, Coord, Geometry,
-    Intersects, LineString, MultiPolygon, Polygon, Rect, Winding,
+    BooleanOps, BoundingRect, Contains, Coord, Geometry, Intersects,
+    LineString, MultiPolygon, Polygon, Rect, Winding, line_string,
 };
-use geozero::{mvt::tile::Layer, ToMvt};
-use h3o::{geom::SolventBuilder, CellIndex, LatLng};
+use geozero::{ToMvt, mvt::tile::Layer};
+use h3o::{CellIndex, LatLng, geom::SolventBuilder};
 use std::{collections::VecDeque, ops::RangeInclusive};
 
 /// Returns every tile ID touched by a given cell index in the specified zoom
@@ -330,7 +330,7 @@ impl CellBoundary {
 
 impl From<CellIndex> for CellBoundary {
     fn from(value: CellIndex) -> Self {
-        let boundary = Polygon::from(value);
+        let boundary = Polygon::new(value.boundary().into(), Vec::new());
         let is_transmeridian = boundary
             .exterior()
             .lines()

@@ -1,6 +1,6 @@
 use super::*;
 use float_eq::assert_float_eq;
-use geo::{polygon, MultiPolygon};
+use geo::{MultiPolygon, polygon};
 
 macro_rules! cells {
         ($($x: expr),* $(,)?) => {{
