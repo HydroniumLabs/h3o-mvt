@@ -14,6 +14,10 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+- bump `geo` to 0.31
+
 ## [0.3.6] - 2025-08-19
 
 ### Changed
