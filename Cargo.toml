@@ -1,6 +1,6 @@
 [package]
 name = "h3o-mvt"
-version = "0.3.7"
+version = "0.3.8"
 authors = ["Sylvain Laperche <sylvain.laperche@gmail.com>"]
 edition = "2024"
 description = "Generate MVT tiles from set of H3 cells."
@@ -25,7 +25,7 @@ pre-release-replacements = [
 
 [dependencies]
 ahash = { version = "0.8", default-features = false, features = ["std", "compile-time-rng"] }
-geo = { version = "0.31", default-features = false }
+geo = { version = "0.32", default-features = false }
 geozero = { version = "0.14", default-features = false, features = ["with-geo", "with-mvt"] }
 h3o = { version = "0.9", default-features = false, features = ["std", "geo"] }
 
