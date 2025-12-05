@@ -5,4 +5,6 @@
 # See https://nnethercote.github.io/perf-book/type-sizes.html
 enum-variant-size-threshold = 128
 # Some crates are still on syn 1.x
-allowed-duplicate-crates = ["syn"]
+# The other seems related to the recent bump of geo, but `cargo tree -i` doesn't
+# show the culprit so disabling for now.
+allowed-duplicate-crates = ["syn", "hash32", "heapless", "rstar", "generic-array"]
