@@ -14,6 +14,13 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+- bump `geo` to 0.33
+- bump `criterion` to 0.8
+- bump `geozero` to 0.15
+- bump `geojson` to 1.0
+
 ## [0.3.8] - 2025-12-05
 
 ### Changed
