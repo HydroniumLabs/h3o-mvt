@@ -117,7 +117,7 @@
 
 mod error;
 mod render;
-mod tile;
+pub mod tile;
 // TODO: if possible, try to reuse the implementation from h3o instead.
 mod ring_hierarchy;
 

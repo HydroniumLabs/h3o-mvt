@@ -158,13 +158,13 @@ impl TileID {
 
     /// Returns the extent size.
     #[must_use]
-    pub(crate) const fn extent() -> u32 {
+    pub const fn extent() -> u32 {
         TILE_SIZE
     }
 
     /// Returns true if the tile is in the eastern hemisphere.
     #[must_use]
-    pub(crate) const fn is_eastern(&self) -> bool {
+    pub const fn is_eastern(&self) -> bool {
         self.x > ((1 << self.z) / 2)
     }
 
@@ -239,7 +239,7 @@ impl TileID {
     }
 
     /// Returns the buffered shape of a tile, in relative tile coordinate.
-    pub(crate) fn buffered_shape() -> Rect {
+    pub fn buffered_shape() -> Rect {
         let min = -f64::from(BUFFER);
         let max = f64::from(TILE_SIZE + BUFFER);
         Rect::new((min, min), (max, max))
