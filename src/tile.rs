@@ -66,6 +66,17 @@ impl TileID {
     /// Returns cells covering the bounding box of the tile.
     #[must_use]
     pub fn cells(self, resolution: Resolution) -> HashSet<CellIndex> {
+        self.cells_with_padding(resolution, PADDING)
+    }
+
+    /// Returns cells covering the bounding box of the tile, inflated by
+    /// `padding`, expressed as a fraction of the tile size.
+    #[must_use]
+    pub fn cells_with_padding(
+        self,
+        resolution: Resolution,
+        padding: f64,
+    ) -> HashSet<CellIndex> {
         let zoom_level = self.zoom();
 
         // At zoom level 0, the whole world is covered.
@@ -107,7 +118,9 @@ impl TileID {
             .build();
         // Compute the shape of the bounding box.
         // Note that in some cases it can be more complex than a simple rect.
-        tiler.add_batch(self.compute_bbox()).expect("invalid bbox");
+        tiler
+            .add_batch(self.compute_bbox_with(padding))
+            .expect("invalid bbox");
         // Polyfill at the selected resolution and convert to the requested one.
         tiler
             .into_coverage()
@@ -176,11 +189,11 @@ impl TileID {
     // around the world (e.g. crossing the antimeridian), the bounding box is
     // split into smaller components that can be polyfilled independanly and
     // then merged back to obtain the final H3 coverage.
-    fn compute_bbox(self) -> MultiPolygon {
+    fn compute_bbox_with(self, padding: f64) -> MultiPolygon {
         // Compute the padded bounding box of the tile.
         let (x, y, z) = (self.x, self.y, self.z);
-        let nw = TileCoord::with_padding(x, y, z, -PADDING);
-        let se = TileCoord::with_padding(x + 1, y + 1, z, PADDING);
+        let nw = TileCoord::with_padding(x, y, z, -padding);
+        let se = TileCoord::with_padding(x + 1, y + 1, z, padding);
         let bbox = Rect::new(nw, se);
 
         // Common case: a trivial bounding box.
@@ -228,6 +241,11 @@ impl TileID {
         }
 
         parts
+    }
+
+    #[cfg(test)]
+    fn compute_bbox(self) -> MultiPolygon {
+        self.compute_bbox_with(PADDING)
     }
 
     /// Returns the bounding box of a tile, in EPSG:4326 coordinate.
