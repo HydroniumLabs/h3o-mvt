@@ -59,7 +59,71 @@ pub fn tiles_for_cell(
     tiles
 }
 
-/// Render the given cells into the specified tile.
+/// Render the given cells, as geometry, into the specified tile.
+///
+/// If `scratch` is true the cells are carved as hole(s) into the tile shape.
+///
+/// If `enable_clipping` is true, the resulting geometry is clipped to fit into
+/// the tile (can avoid distortion at high zoom level). Can be skipped if you do
+/// your own postprocessing.
+///
+/// # Errors
+///
+/// All cell indexes must be unique and have the same resolution, otherwise a
+/// `RenderingError::InvalidInput` is returned.
+pub fn render_to_geom(
+    tile_id: TileID,
+    cells: impl IntoIterator<Item = CellIndex>,
+    scratch: bool,
+    enable_clipping: bool,
+) -> Result<Option<Geometry>, RenderingError> {
+    Ok(SolventBuilder::new()
+        .build()
+        .dissolve(cells)
+        .map_err(RenderingError::InvalidInput)
+        .map(|shape| (!shape.0.is_empty()).then_some(shape))?
+        .map_or_else(
+            || {
+                // If there are no shape in scratch mode, we still need to
+                // render the tile itself.
+                scratch.then(|| Geometry::Rect(TileID::buffered_shape()))
+            },
+            |geom| {
+                let mut geom = MultiPolygon::new(
+                    geom.into_iter()
+                        .map(|mut polygon| {
+                            project_polygon_into_grid(&mut polygon, tile_id);
+                            polygon
+                        })
+                        // Ideally we should filter before the map, but it's
+                        // easier to filter after the reprojection.
+                        .filter(polygon_is_visible)
+                        .collect(),
+                );
+
+                if scratch {
+                    geom = carve_out_from_tile(geom);
+                }
+
+                if enable_clipping {
+                    // Clip the geometry using the buffered tile shape.
+                    //
+                    // This results in more correct line interpolations, thus
+                    // preventing distortions and mismatches at the tile edges
+                    // for shape that overlap several tiles (this tend to become
+                    // visible at high zoom levels such as 19+).
+                    let bbox = TileID::buffered_shape().to_polygon();
+                    geom = geom.intersection(&MultiPolygon(vec![bbox]));
+                }
+
+                (!geom.0.is_empty()).then_some(Geometry::MultiPolygon(geom))
+            },
+        ))
+}
+
+/// Render the given cells, as MVT layer, into the specified tile.
+///
+/// If `scratch` is true the cells are carved as hole(s) into the tile shape.
 ///
 /// # Errors
 ///
@@ -74,52 +138,12 @@ pub fn render(
     name: String,
     scratch: bool,
 ) -> Result<Layer, RenderingError> {
-    let solvent = SolventBuilder::new().build();
-    let geometry = solvent
-        .dissolve(cells)
-        .map_err(RenderingError::InvalidInput)
-        .map(|shape| (!shape.0.is_empty()).then_some(shape))?;
+    let geometry = render_to_geom(tile_id, cells, scratch, true)?;
 
     let mut features = Vec::with_capacity(1);
     if let Some(geometry) = geometry {
-        let mut geometry = MultiPolygon::new(
-            geometry
-                .into_iter()
-                .map(|mut polygon| {
-                    project_polygon_into_grid(&mut polygon, tile_id);
-                    polygon
-                })
-                // Ideally we should filter before the map, but it's easier to
-                // filter after the reprojection.
-                .filter(polygon_is_visible)
-                .collect(),
-        );
-
-        if scratch {
-            geometry = carve_out_from_tile(geometry);
-        }
-
-        // Clip the resulting geometry using the buffered tile shape.
-        //
-        // This results in more correct line interpolations, thus preventing
-        // distortions and mismatches at the tile edges for shape that overlap
-        // several tiles (this tend to become visible at high zoom levels such
-        // as 19+).
-        let bbox = TileID::buffered_shape().to_polygon();
-        geometry = geometry.intersection(&MultiPolygon(vec![bbox]));
-
-        if !geometry.0.is_empty() {
-            features.push(
-                Geometry::MultiPolygon(geometry)
-                    .to_mvt_unscaled()
-                    .map_err(RenderingError::Encoding)?,
-            );
-        }
-    } else if scratch {
-        // If there are no shape in scratch mode, we still need to render the
-        // tile itself.
         features.push(
-            Geometry::Rect(TileID::buffered_shape())
+            geometry
                 .to_mvt_unscaled()
                 .map_err(RenderingError::Encoding)?,
         );

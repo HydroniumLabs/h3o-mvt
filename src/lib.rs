@@ -122,5 +122,5 @@ mod tile;
 mod ring_hierarchy;
 
 pub use error::{InvalidTileID, RenderingError};
-pub use render::{render, tiles_for_cell};
+pub use render::{render, render_to_geom, tiles_for_cell};
 pub use tile::TileID;

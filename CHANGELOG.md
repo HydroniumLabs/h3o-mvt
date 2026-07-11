@@ -14,6 +14,12 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+- add a new `render_to_geom` call. This is helpful if you need to apply some
+  postprocessing on the resulting geometry before the MVT serialization (and/or
+  if you need a custom MVT serialization).
+
 ### Changed
 
 - add an optional parameter to `TileID::cells` to override the padding applied
