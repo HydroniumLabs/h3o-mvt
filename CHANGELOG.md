@@ -14,6 +14,8 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+## [0.4.0] - 2026-07-11
+
 ### Added
 
 - add a new `render_to_geom` call. This is helpful if you need to apply some
