@@ -64,19 +64,16 @@ impl TileID {
     }
 
     /// Returns cells covering the bounding box of the tile.
+    ///
+    /// By default the bbox is padded to match the rendering behavior, but you
+    /// can override it if needed.
     #[must_use]
-    pub fn cells(self, resolution: Resolution) -> HashSet<CellIndex> {
-        self.cells_with_padding(resolution, PADDING)
-    }
-
-    /// Returns cells covering the bounding box of the tile, inflated by
-    /// `padding`, expressed as a fraction of the tile size.
-    #[must_use]
-    pub fn cells_with_padding(
+    pub fn cells(
         self,
         resolution: Resolution,
-        padding: f64,
+        padding: Option<f64>,
     ) -> HashSet<CellIndex> {
+        let padding = padding.unwrap_or(PADDING);
         let zoom_level = self.zoom();
 
         // At zoom level 0, the whole world is covered.
@@ -119,7 +116,7 @@ impl TileID {
         // Compute the shape of the bounding box.
         // Note that in some cases it can be more complex than a simple rect.
         tiler
-            .add_batch(self.compute_bbox_with(padding))
+            .add_batch(self.compute_bbox(padding))
             .expect("invalid bbox");
         // Polyfill at the selected resolution and convert to the requested one.
         tiler
@@ -189,12 +186,9 @@ impl TileID {
     // around the world (e.g. crossing the antimeridian), the bounding box is
     // split into smaller components that can be polyfilled independanly and
     // then merged back to obtain the final H3 coverage.
-    fn compute_bbox_with(self, padding: f64) -> MultiPolygon {
+    fn compute_bbox(self, padding: f64) -> MultiPolygon {
         // Compute the padded bounding box of the tile.
-        let (x, y, z) = (self.x, self.y, self.z);
-        let nw = TileCoord::with_padding(x, y, z, -padding);
-        let se = TileCoord::with_padding(x + 1, y + 1, z, padding);
-        let bbox = Rect::new(nw, se);
+        let bbox = self.bbox(padding);
 
         // Common case: a trivial bounding box.
         if bbox_is_trivial(&bbox) {
@@ -243,16 +237,11 @@ impl TileID {
         parts
     }
 
-    #[cfg(test)]
-    fn compute_bbox(self) -> MultiPolygon {
-        self.compute_bbox_with(PADDING)
-    }
-
     /// Returns the bounding box of a tile, in EPSG:4326 coordinate.
-    pub(crate) fn bbox(self) -> Rect {
+    pub(crate) fn bbox(self, padding: f64) -> Rect {
         let (x, y, z) = (self.x, self.y, self.z);
-        let nw = TileCoord::with_padding(x, y, z, 0.);
-        let se = TileCoord::with_padding(x + 1, y + 1, z, 0.);
+        let nw = TileCoord::with_padding(x, y, z, -padding);
+        let se = TileCoord::with_padding(x + 1, y + 1, z, padding);
         Rect::new(nw, se)
     }
 

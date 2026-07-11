@@ -300,7 +300,7 @@ impl CellBoundary {
                 .all(|coord| bbox.contains(coord))
         }
 
-        let bbox = tile.bbox();
+        let bbox = tile.bbox(0.);
         match self {
             Self::Regular(boundary) => contains(&bbox, boundary),
             Self::Transmeridian(east, west) => {
@@ -314,7 +314,7 @@ impl CellBoundary {
     }
 
     fn intersects(&self, tile: &TileID) -> bool {
-        let bbox = tile.bbox();
+        let bbox = tile.bbox(0.);
         match self {
             Self::Regular(boundary) => boundary.intersects(&bbox),
             Self::Transmeridian(east, west) => {

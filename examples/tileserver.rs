@@ -78,7 +78,7 @@ async fn handler(
     let content = if tile_id.zoom() == 0 {
         data.clone()
     } else {
-        let bbox = tile_id.cells(resolution);
+        let bbox = tile_id.cells(resolution, None);
         let bbox = bbox.into_iter().collect::<HashSet<_>>();
         data & &bbox
     };

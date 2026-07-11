@@ -68,7 +68,7 @@ fn bbox_z0() {
     let tile = TileID::new_unchecked(0, 0, 0);
     let expected = CellIndex::base_cells().collect::<HashSet<_>>();
 
-    let result = tile.cells(Resolution::Zero);
+    let result = tile.cells(Resolution::Zero, None);
 
     assert_eq!(result, expected);
 }
@@ -78,7 +78,7 @@ fn regular_bbox() {
     let tile = TileID::new_unchecked(265544, 180338, 19);
     let expected = cells![0x8a1fb46664e7fff];
 
-    let result = tile.cells(Resolution::Ten);
+    let result = tile.cells(Resolution::Ten, None);
 
     assert_eq!(result, expected);
 }
@@ -103,7 +103,7 @@ fn bbox_transmeridian_right() {
         0x8a9b4361e647fff,
     ];
 
-    let result = tile.cells(Resolution::Ten);
+    let result = tile.cells(Resolution::Ten, None);
 
     assert_eq!(result, expected);
 }
@@ -132,7 +132,7 @@ fn bbox_transmeridian_left() {
         0x8a9b4361a927fff,
     ];
 
-    let result = tile.cells(Resolution::Ten);
+    let result = tile.cells(Resolution::Ten, None);
 
     assert_eq!(result, expected);
 }
@@ -145,7 +145,7 @@ fn bbox_transmeridian_left() {
 #[test]
 fn bbox_z1_nw() {
     let tile = TileID::new_unchecked(0, 0, 1);
-    let result = tile.compute_bbox();
+    let result = tile.compute_bbox(PADDING);
     let expected = MultiPolygon(vec![
         // Main bbox, left part.
         polygon![
@@ -175,7 +175,7 @@ fn bbox_z1_nw() {
 #[test]
 fn bbox_z1_ne() {
     let tile = TileID::new_unchecked(1, 0, 1);
-    let result = tile.compute_bbox();
+    let result = tile.compute_bbox(PADDING);
     let expected = MultiPolygon(vec![
         // Main bbox, left part.
         polygon![
@@ -205,7 +205,7 @@ fn bbox_z1_ne() {
 #[test]
 fn bbox_z1_sw() {
     let tile = TileID::new_unchecked(0, 1, 1);
-    let result = tile.compute_bbox();
+    let result = tile.compute_bbox(PADDING);
     let expected = MultiPolygon(vec![
         // Main bbox, left part.
         polygon![
@@ -235,7 +235,7 @@ fn bbox_z1_sw() {
 #[test]
 fn bbox_z1_se() {
     let tile = TileID::new_unchecked(1, 1, 1);
-    let result = tile.compute_bbox();
+    let result = tile.compute_bbox(PADDING);
     let expected = MultiPolygon(vec![
         // Main bbox, left part.
         polygon![

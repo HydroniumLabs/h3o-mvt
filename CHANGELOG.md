@@ -14,6 +14,11 @@ Possible sections are:
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+- add an optional parameter to `TileID::cells` to override the padding applied
+  (pass `None` to preserve the old behavior)
+
 ## [0.3.10] - 2026-05-24
 
 ### Changed
